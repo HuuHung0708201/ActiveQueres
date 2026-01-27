@@ -1,4 +1,4 @@
-import { XayDungToTrinhDetailData, XayDungToTrinhLeftData } from "base/faker/activequeries";
+import { XayDungToTrinhDetailData, XayDungToTrinhLeftData } from "com/sphinxjsc/activequeries/faker/activequeries";
 import JSONModel from "sap/ui/model/json/JSONModel";
 import Base from "./Base.controller";
 import type Tree from "sap/m/Tree";
@@ -6,11 +6,11 @@ import type StandardTreeItem from "sap/m/StandardTreeItem";
 import type EventBus from "sap/ui/core/EventBus";
 import type TreeSelector from "./ListSelector";
 import type { Route$MatchedEvent } from "sap/ui/core/routing/Route";
-import type { ODataResponse } from "base/types/odata";
+import type { ODataResponse } from "com/sphinxjsc/activequeries/types/odata";
 import type ODataModel from "sap/ui/model/odata/v2/ODataModel";
 
 /**
- * @namespace base.controller
+ * @namespace com.sphinxjsc.activequeries.controller
  */
 export default class Main extends Base {
   private isFirstLoad = true;

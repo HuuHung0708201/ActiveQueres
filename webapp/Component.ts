@@ -11,7 +11,7 @@ import type { ComponentData, Dict } from "./types/utils";
 import TreeSelector from "./controller/ListSelector";
 
 /**
- * @namespace base
+ * @namespace com.sphinxjsc.activequeries
  */
 export default class Component extends BaseComponent {
   private TreeSelector!: TreeSelector;

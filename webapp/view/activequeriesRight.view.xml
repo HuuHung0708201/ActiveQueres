@@ -1,4 +1,4 @@
-<mvc:View controllerName="base.controller.activequeriesRight"
+<mvc:View controllerName="com.sphinxjsc.activequeries.controller.activequeriesRight"
     height="100%"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:core="sap.ui.core"

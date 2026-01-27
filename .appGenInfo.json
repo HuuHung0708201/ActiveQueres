@@ -5,7 +5,7 @@
     "serviceType": "OData URL",
     "metadataFilename": "",
     "serviceUrl": "https://services.odata.org/V2/Northwind/Northwind.svc/",
-    "appName": "base",
+    "appName": "activequeries",
     "appTitle": "App Title",
     "appDescription": "An SAP Fiori application.",
     "appNamespace": "",

@@ -1,4 +1,4 @@
-import type { FilterPayload } from "base/types/filter";
+import type { FilterPayload } from "com/sphinxjsc/activequeries/types/filter";
 import type DynamicPage from "sap/f/DynamicPage";
 import type Button from "sap/m/Button";
 import type ComboBox from "sap/m/ComboBox";
@@ -37,14 +37,15 @@ import Sorter from "sap/ui/model/Sorter";
 import Column from "sap/ui/table/Column";
 import type Table from "sap/ui/table/Table";
 import Base from "./Base.controller";
-import type { Dict } from "base/types/utils";
-import type { ODataError, ODataResponse } from "base/types/odata";
-import type { XayDungToTrinh } from "base/types/pages/main";
-import { StatusSelectData, XayDungToTrinhDetailData, XayDungToTrinhLeftData } from "base/faker/activequeries";
+import type { Dict } from "com/sphinxjsc/activequeries/types/utils";
+import type { ODataError, ODataResponse } from "com/sphinxjsc/activequeries/types/odata";
+import type { XayDungToTrinh } from "com/sphinxjsc/activequeries/types/pages/main";
+
 import type SearchField from "sap/m/SearchField";
+import { StatusSelectData, XayDungToTrinhDetailData } from "../faker/activequeries";
 
 /**
- * @namespace base.controller
+ * @namespace com.sphinxjsc.activequeries.controller
  */
 export default class activequeriesRight extends Base {
   // Filter Search biến

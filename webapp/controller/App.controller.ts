@@ -5,7 +5,7 @@ import ODataModel from "sap/ui/model/odata/v2/ODataModel";
 import AppComponent from "../Component";
 
 /**
- * @namespace base.controller
+ * @namespace com.sphinxjsc.activequeries.controller
  */
 
 export default class App extends Base {

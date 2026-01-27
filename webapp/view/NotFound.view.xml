@@ -1,5 +1,5 @@
 <mvc:View
-    controllerName="base.controller.NotFound"
+    controllerName="com.sphinxjsc.activequeries.controller.NotFound"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
 >

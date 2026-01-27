@@ -1,5 +1,5 @@
 <mvc:View
-    controllerName="base.controller.Main"
+    controllerName="com.sphinxjsc.activequeries.controller.Main"
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns:f="sap.f"

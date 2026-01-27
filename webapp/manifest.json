@@ -1,7 +1,7 @@
 {
   "_version": "1.60.0",
   "sap.app": {
-    "id": "base",
+    "id": "com.sphinxjsc.activequeries",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -61,7 +61,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "base.i18n.i18n",
+          "bundleName": "com.sphinxjsc.activequeries.i18n.i18n",
           "supportedLocales": [
             "en",
             ""
@@ -90,9 +90,9 @@
         "transition": "slide",
         "type": "View",
         "viewType": "XML",
-        "path": "base.view",
+        "path": "com.sphinxjsc.activequeries.view",
         "async": true,
-        "viewPath": "base.view",
+        "viewPath": "com.sphinxjsc.activequeries.view",
         "bypassed": {
           "target": "notFound"
         }
@@ -136,7 +136,7 @@
       }
     },
     "rootView": {
-      "viewName": "base.view.App",
+      "viewName": "com.sphinxjsc.activequeries.view.App",
       "type": "XML",
       "id": "App",
       "async": true

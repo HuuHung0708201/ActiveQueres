@@ -10,7 +10,7 @@ QUnit.module("Navigation Journey");
 const onTheAppPage = new AppPage();
 const onTheViewPage = new ViewPage();
 Opa5.extendConfig({
-	viewNamespace: "base.view.",
+	viewNamespace: "com.sphinxjsc.activequeries.view.",
 	autoWait: true
 });
 
@@ -19,7 +19,7 @@ opaTest("Should see the initial page of the app", function () {
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	onTheAppPage.iStartMyUIComponent({
 		componentConfig: {
-			name: "base"
+			name: "com.sphinxjsc.activequeries"
 		}
 	});
 

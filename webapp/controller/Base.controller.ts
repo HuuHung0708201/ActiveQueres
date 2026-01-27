@@ -1,4 +1,4 @@
-import Formatter from "base/utils/Formatter";
+import Formatter from "com/sphinxjsc/activequeries/utils/Formatter";
 import type ResourceBundle from "sap/base/i18n/ResourceBundle";
 import type Control from "sap/ui/core/Control";
 import UI5Element from "sap/ui/core/Element";
@@ -13,7 +13,7 @@ import ResourceModel from "sap/ui/model/resource/ResourceModel";
 import type Component from "../Component";
 
 /**
- * @namespace base.controller
+ * @namespace com.sphinxjsc.activequeries.controller
  */
 export default class Base extends Controller {
   public formatter = Formatter;

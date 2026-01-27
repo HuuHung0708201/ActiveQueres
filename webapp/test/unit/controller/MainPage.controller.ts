@@ -1,5 +1,5 @@
 /*global QUnit*/
-import Controller from "base/controller/Main.controller";
+import Controller from "com/sphinxjsc/activequeries/controller/Main.controller";
 
 QUnit.module("Main Controller");
 

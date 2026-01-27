@@ -2,7 +2,7 @@
 
 specVersion: "3.1"
 metadata:
-  name: base
+  name: com.sphinxjsc.activequeries
 type: application
 server:
   customMiddleware:
@@ -37,7 +37,7 @@ server:
           theme: sap_horizon
           path: test/flpSandbox.html
           intent:
-            object: base
+            object: com.sphinxjsc.activequeries
             action: display
     - name: ui5-tooling-transpile-middleware
       afterMiddleware: compression
