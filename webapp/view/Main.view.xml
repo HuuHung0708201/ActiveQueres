@@ -1,0 +1,51 @@
+<mvc:View
+    controllerName="base.controller.Main"
+    displayBlock="true"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:f="sap.f"
+    xmlns:l="sap.ui.layout"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+>
+    <VBox
+        height="100%"
+        fitContainer="true"
+    >
+        <Title
+            text="Active queries"
+            level="H4"
+            titleStyle="H4"
+            class="sapUiSmallMarginBegin sapUiSmallMarginBottom sapUiSmallMarginTop"
+        />
+        <ScrollContainer
+            height="85vh"
+            width="100%"
+            vertical="true"
+            horizontal="false">
+            <Tree
+                id="queryTree"
+                items="{
+                    path: 'activequeries>/StepListSet',
+                    parameters: { arrayNames: ['ToSubstepList']}
+                }"
+                mode="SingleSelectMaster"
+                toggleOpenState="onToggleOpenState"
+                selectionChange="onTreeSelectionChange"
+                updateFinished="onUpdateFinished"
+                busyIndicatorDelay="{masterView>/delay}"
+            >
+                <StandardTreeItem
+                    title="{
+                        parts: [
+                            { path: 'activequeries>' }
+                        ],
+                        formatter: '.formatTreeTitle'
+                    }"
+                    icon = "sap-icon://folder"
+                    type="Active"
+                    counter = "{activequeries>count}"
+                />
+            </Tree>
+        </ScrollContainer>
+    </VBox>
+</mvc:View>

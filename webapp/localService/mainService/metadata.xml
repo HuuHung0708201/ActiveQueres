@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="ZODATA_MSTT_WORKOV_SRV" xml:lang="en" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityType Name="StepList" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Step"/>
+                </Key>
+                <Property Name="Step" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Step" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="StepDescr" Type="Edm.String" Nullable="false" MaxLength="255" sap:unicode="false" sap:label="Step description" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <NavigationProperty Name="ToSubstepList" Relationship="ZODATA_MSTT_WORKOV_SRV.StepListToSubstepList" FromRole="FromRole_StepListToSubstepList" ToRole="ToRole_StepListToSubstepList"/>
+            </EntityType>
+            <EntityType Name="SubstepList" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Step"/>
+                    <PropertyRef Name="Substep"/>
+                </Key>
+                <Property Name="Step" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Step" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Substep" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Sub Step" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="SubstepDescr" Type="Edm.String" Nullable="false" MaxLength="255" sap:unicode="false" sap:label="Substep description" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <NavigationProperty Name="ToTaskList" Relationship="ZODATA_MSTT_WORKOV_SRV.SubstepListToTaskList" FromRole="FromRole_SubstepListToTaskList" ToRole="ToRole_SubstepListToTaskList"/>
+            </EntityType>
+            <EntityType Name="TaskList" sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="Step"/>
+                    <PropertyRef Name="Substep"/>
+                    <PropertyRef Name="Task"/>
+                </Key>
+                <Property Name="Step" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Step" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiText" Type="Edm.String" Nullable="false" MaxLength="120" sap:unicode="false" sap:label="Work item text" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="WiId" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Work Item ID" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="Substep" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Sub Step" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiCd" Type="Edm.DateTime" Nullable="false" Precision="7" sap:unicode="false" sap:label="Ngày tạo" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Task" Type="Edm.String" Nullable="false" MaxLength="10" sap:unicode="false" sap:label="Task" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiCt" Type="Edm.Time" Nullable="false" Precision="0" sap:unicode="false" sap:label="Giờ tạo" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="TaskDescr" Type="Edm.String" Nullable="false" MaxLength="255" sap:unicode="false" sap:label="Task description" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="WiPrio" Type="Edm.String" Nullable="false" MaxLength="1" sap:unicode="false" sap:label="Priority" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Screen" Type="Edm.String" Nullable="false" MaxLength="30" sap:unicode="false" sap:label="Mã màn" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiAed" Type="Edm.DateTime" Nullable="false" Precision="7" sap:unicode="false" sap:label="Done on" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Magms" Type="Edm.String" Nullable="false" MaxLength="15" sap:unicode="false" sap:label="Mã GMS" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiStat" Type="Edm.String" Nullable="false" MaxLength="1" sap:unicode="false" sap:label="GMS Status" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+                <Property Name="Mancc" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Mã NCC" sap:creatable="false" sap:updatable="false" sap:sortable="false"/>
+                <Property Name="WiForwBy" Type="Edm.String" Nullable="false" MaxLength="12" sap:unicode="false" sap:label="Forwarder" sap:creatable="false" sap:updatable="false" sap:sortable="false" sap:filterable="false"/>
+            </EntityType>
+            <Association Name="SubstepListToTaskList" sap:content-version="1">
+                <End Type="ZODATA_MSTT_WORKOV_SRV.SubstepList" Multiplicity="1" Role="FromRole_SubstepListToTaskList"/>
+                <End Type="ZODATA_MSTT_WORKOV_SRV.TaskList" Multiplicity="*" Role="ToRole_SubstepListToTaskList"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_SubstepListToTaskList">
+                        <PropertyRef Name="Step"/>
+                        <PropertyRef Name="Substep"/>
+                    </Principal>
+                    <Dependent Role="ToRole_SubstepListToTaskList">
+                        <PropertyRef Name="Step"/>
+                        <PropertyRef Name="Substep"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="StepListToSubstepList" sap:content-version="1">
+                <End Type="ZODATA_MSTT_WORKOV_SRV.StepList" Multiplicity="1" Role="FromRole_StepListToSubstepList"/>
+                <End Type="ZODATA_MSTT_WORKOV_SRV.SubstepList" Multiplicity="*" Role="ToRole_StepListToSubstepList"/>
+                <ReferentialConstraint>
+                    <Principal Role="FromRole_StepListToSubstepList">
+                        <PropertyRef Name="Step"/>
+                    </Principal>
+                    <Dependent Role="ToRole_StepListToSubstepList">
+                        <PropertyRef Name="Step"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <EntityContainer Name="ZODATA_MSTT_WORKOV_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx">
+                <EntitySet Name="StepListSet" EntityType="ZODATA_MSTT_WORKOV_SRV.StepList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="SubstepListSet" EntityType="ZODATA_MSTT_WORKOV_SRV.SubstepList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <EntitySet Name="TaskListSet" EntityType="ZODATA_MSTT_WORKOV_SRV.TaskList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:pageable="false" sap:content-version="1"/>
+                <AssociationSet Name="SubstepListToTaskListSet" Association="ZODATA_MSTT_WORKOV_SRV.SubstepListToTaskList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="SubstepListSet" Role="FromRole_SubstepListToTaskList"/>
+                    <End EntitySet="TaskListSet" Role="ToRole_SubstepListToTaskList"/>
+                </AssociationSet>
+                <AssociationSet Name="StepListToSubstepListSet" Association="ZODATA_MSTT_WORKOV_SRV.StepListToSubstepList" sap:creatable="false" sap:updatable="false" sap:deletable="false" sap:content-version="1">
+                    <End EntitySet="StepListSet" Role="FromRole_StepListToSubstepList"/>
+                    <End EntitySet="SubstepListSet" Role="ToRole_StepListToSubstepList"/>
+                </AssociationSet>
+            </EntityContainer>
+            <Annotation Term="Core.SchemaVersion" String="1.0.0" xmlns="http://docs.oasis-open.org/odata/ns/edm"/>
+            <atom:link rel="self" href="/sap/opu/odata/sap/ZODATA_MSTT_WORKOV_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+            <atom:link rel="latest-version" href="/sap/opu/odata/sap/ZODATA_MSTT_WORKOV_SRV/$metadata" xmlns:atom="http://www.w3.org/2005/Atom"/>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

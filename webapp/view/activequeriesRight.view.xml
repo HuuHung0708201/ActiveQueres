@@ -1,0 +1,252 @@
+<mvc:View controllerName="base.controller.activequeriesRight"
+    height="100%"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:fb="sap.ui.comp.filterbar"
+    xmlns:svm="sap.ui.comp.smartvariants"
+    displayBlock="true"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:ui="sap.ui.table"
+    xmlns:columnmenu="sap.m.table.columnmenu"
+    xmlns:sap.ui.fl="sap.ui.fl"
+    xmlns:sap.ui.dt="sap.ui.dt"
+    xmlns:vm="sap.ui.fl.variants"
+>
+    <f:DynamicPage id="dynamicPage" headerExpanded="{/headerExpanded}">
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title
+                        id="tilteText"
+                        text="Save draft"
+                        level="H2"
+                    />
+                </f:heading>
+            </f:DynamicPageTitle>
+        </f:title>
+        <f:header>
+            <f:DynamicPageHeader>
+                <f:content>
+                    <fb:FilterBar
+                        id="filterbar"
+                        persistencyKey="myPersKey"
+                        useToolbar="false"
+                        search=".onSearch"
+                        filterChange=".onFilterChange"
+                        afterVariantLoad=".onAfterVariantLoad"
+                        showGoOnFB="true"
+                        showClearOnFB="true"
+                        clear="clearFilterBar"
+                    >
+                        <fb:filterGroupItems>
+                            <fb:FilterGroupItem
+                                name="Subject"
+                                label="Subject"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <Input
+                                        id="Subject"
+                                        name="Subject"
+                                        placeholder="Nhập Subject"
+                                        liveChange="onInputChange" 
+                                    />
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="From"
+                                label="From"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        id="From"
+                                        name="From"
+                                        items="{formModel>/fromItems}"
+                                        width="100%"
+                                        selectionChange="onSelectionChange"
+                                    >
+                                        <core:Item key="{formModel>key}" text="{formModel>text}" />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="SentOn"
+                                label="Sent On"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <DatePicker
+                                        id="SentOn"
+                                        name="SentOn"
+                                        displayFormat="dd.MM.yyyy"
+                                        valueFormat="yyyyMMdd"
+                                    />
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="Priority"
+                                label="Priority"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        id = "Priority"
+                                        name="Priority"
+                                        items="{PriorityModel>/PriorityItems}"
+                                        width="100%"
+                                        selectionChange="onSelectionChange"
+                                    >
+                                        <core:Item key="{PriorityModel>key}" text="{PriorityModel>text}" />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="Duedate"
+                                label="Due date"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <DatePicker
+                                        name="Duedate"
+                                        id= "Duedate"
+                                        displayFormat="dd.MM.yyyy"
+                                        valueFormat="yyyyMMdd"
+                                    />
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="Satus"
+                                label="Satus"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        name="Status"
+                                        id = "Status"
+                                        width="100%"
+                                        items="{StatusModel>/StatusItems}"
+                                        selectionChange="onSelectionChange"
+                                    >
+                                        <core:Item key="{StatusModel>key}" text="{StatusModel>text}" />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                            <fb:FilterGroupItem
+                                name="Forwarded By"
+                                label="Forwarded By"
+                                groupName="Group1"
+                                visibleInFilterBar="true"
+                            >
+                                <fb:control>
+                                    <MultiComboBox
+                                        name="ForwardedBy"
+                                        id = "ForwardedBy"
+                                        width="100%"
+                                        items="{ForwardedByModel>/ForwardedByItems}"
+                                        selectionChange="onSelectionChange"
+                                    >
+                                        <core:Item key="{ForwardedByModel>key}" text="{ForwardedByModel>text}" />
+                                    </MultiComboBox>
+                                </fb:control>
+                            </fb:FilterGroupItem>
+                        </fb:filterGroupItems>
+                    </fb:FilterBar>
+                </f:content>
+            </f:DynamicPageHeader>
+        </f:header>
+        <f:content>
+            <ui:Table id="persoTable" sort="onSort" columnResize="onColumnResize" columnMove="onColumnMove" rowMode="Auto" ariaLabelledBy="title" sap.ui.fl:flexibility="sap/m/flexibility/EngineFlex" rows="{dulieuFiltered>/dulieu/ToTaskList/results}" busy="{/isBusy}">
+                <ui:extension>
+                    <OverflowToolbar class="padding-top24 padding-bottom24">
+                        <Label
+                            text="Show:"
+                            labelFor="select1"
+                            required="true"
+                        />
+                        <Select id="select1" width="178px" change="onStatusChange"  items="{showModel>/items}">
+                            <core:Item key="{showModel>key}" text="{showModel>text}" />
+                        </Select>
+                        <ToolbarSpacer/>
+                        <Button icon="sap-icon://action-settings" press="openPersoDialog"/>
+                    </OverflowToolbar>
+                </ui:extension>
+                <ui:noData>
+                    <IllustratedMessage enableVerticalResponsiveness="true"/>
+                </ui:noData>
+                <ui:dependents>
+                    <columnmenu:Menu id="menu">
+                        <columnmenu:items>
+                            <columnmenu:ActionItem icon="sap-icon://sort" label="Sort" press="onColumnHeaderItemPress"/>
+                            <columnmenu:ActionItem icon="sap-icon://table-column" label="Columns" press="onColumnHeaderItemPress"/>
+                        </columnmenu:items>
+                    </columnmenu:Menu>
+                </ui:dependents>
+                <ui:columns>
+                    <ui:Column id="TaskDescr_col" headerMenu="menu" resizable="true" autoResizable="true" width="250px" sortProperty="TaskDescr">
+                        <Label text="Subject" />
+                        <ui:template>
+                            <Text text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/>
+                        </ui:template>
+                    </ui:Column>
+                    <ui:Column id="sentOn_col" headerMenu="menu" resizable="true" autoResizable="true" width="150px" sortProperty="Sent on">
+                        <Label text="Sent On" />
+                        <ui:template>
+                            <Text
+                                text="{
+                                    path: 'dulieuFiltered>WiCd',
+                                    formatter: '.formatter.formatDate'
+                                }"
+                            />
+                        </ui:template>
+                    </ui:Column>
+                     <ui:Column id="Priority_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Priority">
+                        <Label text="Priority" />
+                        <ui:template>
+                            <Text text="{dulieuFiltered>Priority}" tooltip="{dulieuFiltered>Priority}"/>
+                        </ui:template>
+                    </ui:Column>
+                    <ui:Column id="dueDate_col" headerMenu="menu" resizable="true" autoResizable="true" width="150px" sortProperty="Due date">
+                        <Label text="Due date" />
+                        <ui:template>
+                            <Text
+                                text="{
+                                    path: 'dulieuFiltered>WiAed',
+                                    formatter: '.formatter.formatDate'
+                                }"
+                            />
+                        </ui:template>
+                    </ui:Column>
+                    <ui:Column id="status_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Status">
+                        <Label text="Status" />
+                        <ui:template>
+                            <ObjectStatus
+                                text="{
+                                    path: 'dulieuFiltered>WiStat', formatter: '.formatStatusText'
+                                }"
+                                state="{
+                                    path: 'dulieuFiltered>WiStat', formatter: '.formatStatusState'
+                                }"
+                                inverted="true"
+                            />
+                        </ui:template>
+                    </ui:Column>
+                    <ui:Column id="Forward_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Forward By">
+                        <Label text="Forward by" />
+                        <ui:template>
+                            <Text text="{dulieuFiltered>WiForwBy}"/>
+                        </ui:template>
+                    </ui:Column>
+                </ui:columns>
+            </ui:Table>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>
