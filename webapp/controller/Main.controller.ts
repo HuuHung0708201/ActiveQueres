@@ -38,6 +38,8 @@ export default class Main extends Base {
 
     tree.attachEventOnce("updateFinished", () => {
       ViewModel.setProperty("/delay", OriginalBusyDelay);
+
+      tree.expandToLevel(99);
     });
 
     this.getView()?.addEventDelegate({
@@ -67,11 +69,6 @@ export default class Main extends Base {
     }, this);
 
     this.getRouter().attachBypassed(this.onBypassed, this);
-
-    tree.attachUpdateFinished(() => {
-      tree.expandToLevel(99);
-    });
-
   }
 
   // Get dữ liệu

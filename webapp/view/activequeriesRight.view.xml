@@ -14,7 +14,7 @@
     xmlns:sap.ui.dt="sap.ui.dt"
     xmlns:vm="sap.ui.fl.variants"
 >
-    <f:DynamicPage id="dynamicPage" headerExpanded="{/headerExpanded}">
+    <f:DynamicPage id="dynamicPage" headerExpanded="{/headerExpanded}" showFooter="true">
         <f:title>
             <f:DynamicPageTitle>
                 <f:heading>
@@ -166,7 +166,7 @@
         <f:content>
             <ui:Table id="persoTable" sort="onSort" columnResize="onColumnResize" columnMove="onColumnMove" rowMode="Auto" ariaLabelledBy="title" sap.ui.fl:flexibility="sap/m/flexibility/EngineFlex" rows="{dulieuFiltered>/dulieu/ToTaskList/results}" busy="{/isBusy}">
                 <ui:extension>
-                    <OverflowToolbar class="padding-top24 padding-bottom24">
+                    <OverflowToolbar class="sapMTBHeader-CTX">
                         <Label
                             text="Show:"
                             labelFor="select1"
@@ -194,7 +194,8 @@
                     <ui:Column id="TaskDescr_col" headerMenu="menu" resizable="true" autoResizable="true" width="250px" sortProperty="TaskDescr">
                         <Label text="Subject" />
                         <ui:template>
-                            <Text text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/>
+                            <!-- <Text text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/> -->
+                            <Link text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/>
                         </ui:template>
                     </ui:Column>
                     <ui:Column id="sentOn_col" headerMenu="menu" resizable="true" autoResizable="true" width="150px" sortProperty="Sent on">
@@ -248,5 +249,14 @@
                 </ui:columns>
             </ui:Table>
         </f:content>
+        <f:footer>
+            <OverflowToolbar id="footer">
+                <Button
+                    text="Refresh"
+                    type="Default"
+                    press="onRefresh"
+                />
+            </OverflowToolbar>
+        </f:footer>
     </f:DynamicPage>
 </mvc:View>
