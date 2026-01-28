@@ -61,245 +61,292 @@ export default class activequeriesRight extends Base {
   private MetadataHelper!: MetadataHelper;
   private IntialWidth!: Record<string, string>;
 
+  // #region Hàm khởi tạo
   public override onInit(): void {
-    // Mockdata để test do chưa có API
+    this.initMockData();
+    this.initModels();
+    this.initEventBus();
+    this.initUIControls();
+    this.initTableModel();
+    this.initFilterBar();
+    this.initBusinessLogic();
+  }
+
+  /**
+   * Khởi tạo dữ liệu mock và gán vào model "dulieu"
+   */
+  private initMockData(): void {
     const model = new JSONModel(XayDungToTrinhDetailData);
-
     this.setModel(model, "dulieu");
+  }
 
-    // Tạo model trống cho dữ liệu con hiển thị
+  /**
+   * Khởi tạo các JSONModel dùng cho dữ liệu lọc, form và các danh sách select
+   */
+  private initModels(): void {
     this.setModel(new JSONModel({ dulieu: [] }), "dulieuFiltered");
     this.setModel(new JSONModel({ dulieu: [] }), "dulieuFiltered1");
-    // Tạo để điển dữ liệu vào thanh search Form
+
     this.setModel(new JSONModel({ fromItems: [] }), "formModel");
     this.setModel(new JSONModel({ PriorityItems: [] }), "PriorityModel");
     this.setModel(new JSONModel({ StatusItems: [] }), "StatusModel");
     this.setModel(new JSONModel({ ForwardedByItems: [] }), "ForwardedByModel");
 
-    const ShowModel = new JSONModel(StatusSelectData);
+    this.setModel(new JSONModel(StatusSelectData), "showModel");
+  }
 
-    this.setModel(ShowModel, "showModel");
+  /**
+   * Khởi tạo EventBus: đăng ký lắng nghe các sự kiện click item và load dữ liệu theo ID
+   */
+  private initEventBus(): void {
+    const eventBus = this.getOwnerComponent()?.getEventBus() as EventBus;
 
-    // Nếu muốn tự động chọn node dựa trên objectId (ví dụ từ router)
-    // const objectId = this.getRouter().getHashChanger().getHash().split("/")[1];
-    // if (objectId) {
-    //   this.filterByNodeId(objectId);
-    // }
+    eventBus.subscribe("MyChannel", "itemClicked", this.onItemClicked, this);
+    eventBus.subscribe(
+      "LayDuLieuVoiIDTuongUng",
+      "itemDataID",
+      this.loadDataById,
+      this
+    );
+  }
 
-    const EventBus = <EventBus>this.getOwnerComponent()?.getEventBus();
-
-    EventBus.subscribe("MyChannel", "itemClicked", this.onItemClicked, this);
-    EventBus.subscribe("LayDuLieuVoiIDTuongUng", "itemDataID", this.loadDataById, this);
-
-    this.ThayDoiTenButton();
-    this.registerForP13n();
-    this.onResetFilters();
-
-    // Filter Search
-    this.view = <View>this.getView();
+  /**
+   * Khởi tạo và cache các control UI chính (View, Router, Table, Layout)
+   */
+  private initUIControls(): void {
+    this.view = this.getView() as View;
     this.router = this.getRouter();
     this.table = this.getControlById<Table>("persoTable");
     this.layout = this.getControlById<DynamicPage>("dynamicPage");
+  }
 
+  /**
+   * Khởi tạo model cho Table, quản lý dữ liệu dòng và các dòng được chọn
+   */
+  private initTableModel(): void {
     this.setModel(
       new JSONModel({
         rows: [],
-        selectedIndices: [],
+        selectedIndices: []
       }),
       "table"
     );
+  }
 
-    // Filters
+  /**
+   * Khởi tạo FilterBar và đăng ký các hàm xử lý lấy, áp dụng và đọc bộ lọc
+   */
+  private initFilterBar(): void {
     this.filterBar = this.getControlById<FilterBar>("filterbar");
 
-    // Filter initialize
     this.filterBar.registerFetchData(this.fetchData);
     this.filterBar.registerApplyData(this.applyData);
     this.filterBar.registerGetFiltersWithValues(this.getFiltersWithValues);
-    // Filter Search Hết
   }
 
-  // Load dữ liệu tương ứng
-  private loadDataById(channel: string, eventId: string, leafId: any): void {
-    const model = this.getModel("dulieuFiltered");
-
-    const ODataModel = this.getModel<ODataModel>();
-
-    ODataModel.read("/StepListSet", {
-      urlParameters: {
-        "$expand": "ToSubstepList/ToTaskList"
-      },
-      success: (response: ODataResponse<any[]>) => {
-
-        // 1️⃣ tìm đúng Substep
-        let aTasks: any[] = [];
-
-        let tilteText = this.getControlById<Text>("tilteText");
-
-        if (tilteText) {
-          (tilteText as any).setText(response.results[0].ToSubstepList.results[0].SubstepDescr);
-        }
-
-        response.results.some(step => {
-          const aSubsteps = step.ToSubstepList?.results || [];
-
-          const Substep = aSubsteps.find(
-            (s: any) => s.substep === (leafId as any).leafId
-          );
-
-          if (Substep) {
-            aTasks = Substep.ToTaskList?.results || [];
-            return true; // break
-          }
-          return false;
-        });
-
-        let dulieu = {
-          ToTaskList: {
-            results: aTasks || []
-          }
-        }
-
-        model.setProperty("/dulieu", dulieu);
-      },
-      error: (err: Error) => console.error(err)
-    });
-
-
-  }
-
-  // #region Hàm xử lý lấy thông tin json khi click vào
-  private onItemClicked(channel: string, eventId: string, data: any): void {
+  /**
+   * Khởi tạo logic nghiệp vụ: đổi tên nút, đăng ký cá nhân hoá và reset bộ lọc
+   */
+  private initBusinessLogic(): void {
+    this.ThayDoiTenButton();
+    this.registerForP13n();
     this.onResetFilters();
+  }
+  // #endregion
 
-    let tilteText = this.getControlById<Text>("tilteText");
-
-    if (tilteText) {
-      (tilteText as any).setText(data.data.SubstepDescr);
-    }
-
-    const NodeID = data.data.Substep;
-
-    if (!NodeID) {
+  // #region Load dữ liệu theo SubstepId từ OData, lọc Task tương ứng và cập nhật model hiển thị
+  private loadDataById(
+    channel: string,
+    eventId: string,
+    payload: { SubstepId?: string }
+  ): void {
+    if (!payload?.SubstepId) {
       return;
     }
 
     const model = this.getModel("dulieuFiltered");
+    const odataModel = this.getModel<ODataModel>();
 
-    model.setProperty("/dulieu", data.data);
+    odataModel.read("/StepListSet", {
+      urlParameters: {
+        "$expand": "ToSubstepList/ToTaskList"
+      },
+      success: (response: ODataResponse<any[]>) => {
+        if (!payload.SubstepId) {
+          return;
+        }
+        const result = this.extractTasksBySubstep(
+          response.results,
+          payload.SubstepId
+        );
 
-    // // Lọc dữ liệu con theo idCha
-    const Filtered = (this.getModel("dulieu")?.getData().dulieu || []).filter(
-      (item: any) => item.idCha === NodeID
-    );
-
-    // Đẩy dữ liệu filtered vào model tạm để bind vào UI
-    // const FilteredModel = new JSONModel({ dulieu: Filtered });
-
-    // this.setModel(FilteredModel, "dulieuFiltered");
-
-    // Lấy dữ liệu form ra
-    const fromItems = Array.from(
-      new Map(
-        Filtered
-          .filter((item: any) => item.From) // tránh null/undefined
-          .map((item: any) => [item.From, item])
-      ).values()
-    ).map((item: any, index: number) => ({
-      key: index + 1,
-      text: item.From
-    }))
-
-    const PriorityItems = Array.from(
-      new Map(
-        Filtered
-          .filter((item: any) => item.Priority) // tránh null/undefined
-          .map((item: any) => [item.Priority, item])
-      ).values()
-    ).map((item: any, index: number) => ({
-      key: index + 1,
-      text: item.Priority
-    }))
-
-    const StatusItems = Array.from(
-      new Map(
-        Filtered
-          .filter((item: any) => item.Status) // tránh null/undefined
-          .map((item: any) => [item.Status, item])
-      ).values()
-    ).map((item: any, index: number) => ({
-      key: item.Status,
-      text:
-        item.Status === "01"
-          ? "New"
-          : item.Status === "02"
-            ? "In Progress"
-            : item.Status === "03"
-              ? "Rejected"
-              : item.Status === "04"
-                ? "Approved"
-                : item.Status
-    }))
-
-    const ForwardedByItems = Array.from(
-      new Map(
-        Filtered
-          .filter((item: any) => item.ForwardedBy) // tránh null/undefined
-          .map((item: any) => [item.ForwardedBy, item])
-      ).values()
-    ).map((item: any, index: number) => ({
-      key: index + 1,
-      text: item.ForwardedBy
-    }))
-
-    const FormModel = <JSONModel>this.getModel("formModel");
-    const PriorityModel = <JSONModel>this.getModel("PriorityModel");
-    const StatusModel = <JSONModel>this.getModel("StatusModel");
-    const ForwardedByModel = <JSONModel>this.getModel("ForwardedByModel");
-
-    // Đổ danh sách item
-    FormModel.setProperty("/fromItems", fromItems);
-    PriorityModel.setProperty("/PriorityItems", PriorityItems);
-    StatusModel.setProperty("/StatusItems", StatusItems);
-    ForwardedByModel.setProperty("/ForwardedByItems", ForwardedByItems);
+        this.updateTitle(result.substepDescr);
+        model.setProperty("/dulieu", {
+          ToTaskList: { results: result.tasks }
+        });
+      },
+      error: (err: Error) => console.error(err)
+    });
   }
 
-  // Hàm lọc dữ liệu theo nodeID khi load lần đầu
-  // private filterByNodeId(nodeId: string): void {
-  //   const Filtered = (this.getModel("dulieu")?.getData().dulieu || []).filter(
-  //     (item: any) => item.idCha === nodeId
-  //   );
+  /**
+   * Tìm Substep theo ID và trích xuất danh sách Task cùng mô tả Substep
+   */
+  private extractTasksBySubstep(
+    steps: any[],
+    substepId: string
+  ): { tasks: any[]; substepDescr?: string } {
+    for (const step of steps) {
+      const substeps = step.ToSubstepList?.results || [];
 
-  //   const FilteredModel = <JSONModel>this.getModel("dulieuFiltered");
+      const substep = substeps.find(
+        (s: any) => s.Substep === substepId
+      );
 
-  //   FilteredModel.setData({ dulieu: Filtered });
+      if (substep) {
+        return {
+          tasks: substep.ToTaskList?.results || [],
+          substepDescr: substep.SubstepDescr
+        };
+      }
+    }
 
-  //   const FilteredModel1 = <JSONModel>this.getModel("dulieuFiltered1");
+    return { tasks: [] };
+  }
 
-  //   FilteredModel1.setData({ dulieu: Filtered });
+  /**
+   * Cập nhật tiêu đề hiển thị theo nội dung được truyền vào
+   */
+  private updateTitle(text?: string): void {
+    if (!text) {
+      return;
+    }
 
-  //   const model = new JSONModel(XayDungToTrinhLeftData);
+    this.getControlById<Text>("tilteText")?.setText(text);
+  }
+  // #endregion
 
-  //   this.setModel(model);
+  // #region Hàm xử lý lấy thông tin json khi click vào
+  private onItemClicked(
+    channel: string,
+    eventId: string,
+    payload: any
+  ): void {
+    this.onResetFilters();
 
-  //   const treeData = this.getModel()?.getData()?.queries || [];
-  //   let parentNodeName = "";
+    const substep = payload?.data;
+    if (!substep?.Substep) {
+      return;
+    }
 
-  //   treeData.some((query: any) =>
-  //     query.nodes.some((node: any) => {
-  //       if (node.id === nodeId) {
-  //         parentNodeName = node.name;
-  //         return true;
-  //       }
-  //       return false;
-  //     })
-  //   );
+    this.updateTitle(substep.SubstepDescr);
+    this.updateDetailModel(substep);
 
-  //   const titleText = this.getControlById<Text>("tilteText");
+    const filteredItems = this.filterChildrenByNode(substep.Substep);
 
-  //   if (titleText && parentNodeName) {
-  //     titleText.setText(parentNodeName);
+    this.updateFilterModels(filteredItems);
+  }
+
+  /**
+   * Cập nhật dữ liệu chi tiết vào model "dulieuFiltered"
+   */
+  private updateDetailModel(data: any): void {
+    this.getModel("dulieuFiltered").setProperty("/dulieu", data);
+  }
+
+  /**
+   * Lọc và trả về danh sách phần tử con theo nodeId
+   */
+  private filterChildrenByNode(nodeId: string): any[] {
+    const source = this.getModel("dulieu")?.getData().dulieu || [];
+    return source.filter((item: any) => item.idCha === nodeId);
+  }
+
+  /**
+   * Tạo danh sách item duy nhất theo key, kèm text hiển thị (có thể custom)
+   */
+  private buildUniqueItems<T>(
+    data: T[],
+    key: keyof T,
+    textMapper?: (value: any) => string
+  ): { key: any; text: string }[] {
+    return Array.from(
+      new Map(
+        data
+          .filter(item => item[key])
+          .map(item => [item[key], item])
+      ).values()
+    ).map(item => ({
+      key: item[key],
+      text: textMapper ? textMapper(item[key]) : String(item[key])
+    }));
+  }
+
+  /**
+   * Map mã trạng thái sang text hiển thị tương ứng
+   */
+  private mapStatusText(status: string): string {
+    const map: Record<string, string> = {
+      "01": "New",
+      "02": "In Progress",
+      "03": "Rejected",
+      "04": "Approved"
+    };
+    return map[status] || status;
+  }
+
+  /**
+   * Cập nhật các model filter (From, Priority, Status, ForwardedBy) từ danh sách item
+   */
+  private updateFilterModels(items: any[]): void {
+    this.getModel<JSONModel>("formModel")
+      .setProperty("/fromItems", this.buildUniqueItems(items, "From"));
+
+    this.getModel<JSONModel>("PriorityModel")
+      .setProperty("/PriorityItems", this.buildUniqueItems(items, "Priority"));
+
+    this.getModel<JSONModel>("StatusModel")
+      .setProperty(
+        "/StatusItems",
+        this.buildUniqueItems(items, "Status", this.mapStatusText)
+      );
+
+    this.getModel<JSONModel>("ForwardedByModel")
+      .setProperty(
+        "/ForwardedByItems",
+        this.buildUniqueItems(items, "ForwardedBy")
+      );
+  }
+
+
+  // private onItemClicked(channel: string, eventId: string, data: any): void {
+  //   this.onResetFilters();
+
+  //   let tilteText = this.getControlById<Text>("tilteText");
+
+  //   if (tilteText) {
+  //     (tilteText as any).setText(data.data.SubstepDescr);
   //   }
+
+  //   const NodeID = data.data.Substep;
+
+  //   if (!NodeID) {
+  //     return;
+  //   }
+
+  //   const model = this.getModel("dulieuFiltered");
+
+  //   model.setProperty("/dulieu", data.data);
+
+  //   // // Lọc dữ liệu con theo idCha
+  //   const Filtered = (this.getModel("dulieu")?.getData().dulieu || []).filter(
+  //     (item: any) => item.idCha === NodeID
+  //   );
+
+  //   // Đẩy dữ liệu filtered vào model tạm để bind vào UI
+  //   // const FilteredModel = new JSONModel({ dulieu: Filtered });
+
+  //   // this.setModel(FilteredModel, "dulieuFiltered");
 
   //   // Lấy dữ liệu form ra
   //   const fromItems = Array.from(
@@ -311,7 +358,7 @@ export default class activequeriesRight extends Base {
   //   ).map((item: any, index: number) => ({
   //     key: index + 1,
   //     text: item.From
-  //   }));
+  //   }))
 
   //   const PriorityItems = Array.from(
   //     new Map(
@@ -322,7 +369,7 @@ export default class activequeriesRight extends Base {
   //   ).map((item: any, index: number) => ({
   //     key: index + 1,
   //     text: item.Priority
-  //   }));
+  //   }))
 
   //   const StatusItems = Array.from(
   //     new Map(
@@ -342,7 +389,7 @@ export default class activequeriesRight extends Base {
   //             : item.Status === "04"
   //               ? "Approved"
   //               : item.Status
-  //   }));
+  //   }))
 
   //   const ForwardedByItems = Array.from(
   //     new Map(
@@ -353,67 +400,91 @@ export default class activequeriesRight extends Base {
   //   ).map((item: any, index: number) => ({
   //     key: index + 1,
   //     text: item.ForwardedBy
-  //   }));
+  //   }))
 
   //   const FormModel = <JSONModel>this.getModel("formModel");
   //   const PriorityModel = <JSONModel>this.getModel("PriorityModel");
   //   const StatusModel = <JSONModel>this.getModel("StatusModel");
   //   const ForwardedByModel = <JSONModel>this.getModel("ForwardedByModel");
 
-  //   FormModel.setData({ fromItems: fromItems });
-  //   PriorityModel.setData({ PriorityItems: PriorityItems });
-  //   StatusModel.setData({ StatusItems: StatusItems });
-  //   ForwardedByModel.setData({ ForwardedByItems: ForwardedByItems });
+  //   // Đổ danh sách item
+  //   FormModel.setProperty("/fromItems", fromItems);
+  //   PriorityModel.setProperty("/PriorityItems", PriorityItems);
+  //   StatusModel.setProperty("/StatusItems", StatusItems);
+  //   ForwardedByModel.setProperty("/ForwardedByItems", ForwardedByItems);
   // }
-
 
   // #endregion
 
   // #region Hàm xử lý thay đổi text ở Button
   private ThayDoiTenButton(): void {
     const filterBar = this.getControlById<FilterBar>("filterbar");
-
-    if (filterBar) {
-      const goButton = (filterBar as any)._oClearButtonOnFB;
-
-      if (goButton) {
-        goButton.setText("Clear Filters");
-      }
+    if (!filterBar) {
+      return;
     }
 
-    if (filterBar) {
-      filterBar.addEventDelegate({
-        onAfterRendering: function () {
-          // 🔹 Lấy toàn bộ phần tử con được render bên trong FilterBar
-          const allControls = filterBar.findAggregatedObjects(true);
+    this.renameClearButton(filterBar);
+    this.customizeFilterBarButtons(filterBar);
+  }
 
-          // 🔹 Tìm button có text "Go"
-          const goButton = <Button>allControls.find((ctrl: any) => ctrl?.getText && ctrl.getText() === "Go");
+  /**
+   * Đổi text nút Clear của FilterBar thành "Clear Filters"
+   */
+  private renameClearButton(filterBar: FilterBar): void {
+    const clearButton = (filterBar as any)._oClearButtonOnFB;
+    clearButton?.setText("Clear Filters");
+  }
 
-          const adaptButton = <Button>(
-            allControls.find((ctrl: any) => ctrl?.getText && ctrl.getText() === "Adapt Filters")
-          );
+  /**
+   * Tuỳ chỉnh nút Go và Adapt của FilterBar sau khi render
+   */
+  private customizeFilterBarButtons(filterBar: FilterBar): void {
+    filterBar.addEventDelegate({
+      onAfterRendering: () => {
+        const allControls = <Control[]>filterBar.findAggregatedObjects(true);
 
-          if (goButton) {
-            goButton.setText("Search");
+        this.updateGoButton(allControls);
+        this.updateAdaptButton(allControls);
+      },
+    });
+  }
 
-            goButton.setIcon("sap-icon://search");
-          } else {
-            console.warn("⚠️ Không tìm thấy nút Go trong FilterBar.");
-          }
+  /**
+   * Cập nhật nút Go: đổi text thành "Search" và thêm icon tìm kiếm
+   */
+  private updateGoButton(controls: Control[]): void {
+    const goButton = controls.find(
+      (ctrl: any) => ctrl?.getText && ctrl.getText() === "Go"
+    ) as Button;
 
-          if (adaptButton) {
-            adaptButton.setIcon("sap-icon://filter-facets");
-          } else {
-            console.warn("⚠️ Không tìm thấy nút Go trong FilterBar.");
-          }
-        },
-      });
+    if (!goButton) {
+      return;
     }
+
+    goButton.setText("Search");
+    goButton.setIcon("sap-icon://search");
+  }
+
+  /**
+   * Cập nhật nút Adapt Filters: thêm icon filter-facets
+   */
+  private updateAdaptButton(controls: Control[]): void {
+    const adaptButton = controls.find(
+      (ctrl: any) => ctrl?.getText && ctrl.getText() === "Adapt Filters"
+    ) as Button;
+
+    if (!adaptButton) {
+      return;
+    }
+
+    adaptButton.setIcon("sap-icon://filter-facets");
   }
   // #endregion
 
-  // #region formatter trạng thái 
+  // #region formatter trạng thái
+  /**
+   *  Format mã trạng thái sang text hiển thị tương ứng 
+  */
   public formatStatusText(statusKey: string): string {
     const map: Record<string, string> = {
       "01": "New",
@@ -424,6 +495,9 @@ export default class activequeriesRight extends Base {
     return map[statusKey] ?? statusKey;
   }
 
+  /**
+   * Map mã trạng thái sang ValueState tương ứng để hiển thị UI
+   */
   public formatStatusState(statusKey: string): ValueState {
     const map: Record<string, ValueState> = {
       "01": ValueState.Information,
@@ -435,11 +509,24 @@ export default class activequeriesRight extends Base {
   // #endregion
 
   // #region Xử lý liên quan đến bảng như: di chuyển cột các thứ
-
-  // #region Đăng ký Table với P13n Engine để hỗ trợ cá nhân hóa (ẩn/hiện cột, sort, group)
+  /**
+   * Đăng ký Table với P13n Engine để hỗ trợ cá nhân hóa (ẩn/hiện cột, sort, group)
+   */
   private registerForP13n(): void {
     const table = this.getControlById<Table>("persoTable");
+    if (!table) {
+      return;
+    }
 
+    this.initP13nMetadata();
+    this.initP13nWidths();
+    this.registerP13nEngine(table);
+  }
+
+  /**
+   * Khởi tạo metadata cho P13n (cá nhân hoá) các cột của Table
+   */
+  private initP13nMetadata(): void {
     this.MetadataHelper = new MetadataHelper([
       { key: "TaskDescr_col", label: "TaskDescr", path: "TaskDescr" },
       { key: "sentOn_col", label: "Sent On", path: "WiCd" },
@@ -448,7 +535,12 @@ export default class activequeriesRight extends Base {
       { key: "status_col", label: "Status", path: "WiStat" },
       { key: "Forward_col", label: "Forward By", path: "WiForwBy" },
     ]);
+  }
 
+  /**
+   * Khởi tạo độ rộng mặc định cho các cột Table (P13n)
+   */
+  private initP13nWidths(): void {
     this.IntialWidth = {
       TaskDescr_col: "11rem",
       sentOn_col: "11rem",
@@ -457,28 +549,32 @@ export default class activequeriesRight extends Base {
       status_col: "11rem",
       Forward_col: "11rem",
     };
+  }
 
-    Engine.getInstance().register(table, {
+  /**
+   * Đăng ký Table với P13n Engine để hỗ trợ cá nhân hoá cột, sort và group
+   */
+  private registerP13nEngine(table: Table): void {
+    const engine = Engine.getInstance();
+
+    engine.register(table, {
       helper: this.MetadataHelper,
-
       controller: {
         Columns: new SelectionController({
           targetAggregation: "columns",
-          control: table
+          control: table,
         }),
-        Sorter: new SortController({
-          control: table
-        }),
-        Groups: new GroupController({
-          control: table
-        }),
-      }
+        Sorter: new SortController({ control: table }),
+        Groups: new GroupController({ control: table }),
+      },
     });
 
-    Engine.getInstance().attachStateChange(this.handleStateChange.bind(this));
+    engine.attachStateChange(this.handleStateChange.bind(this));
   }
 
-  // Mở dialog tùy chỉnh bảng (ẩn/hiện cột, sắp xếp) dựa trên sự kiện click
+  /**
+   * Mở dialog tùy chỉnh bảng (ẩn/hiện cột, sắp xếp) dựa trên sự kiện click
+   */
   public openPersoDialog(event: Event): void {
     const table = this.getControlById<Table>("persoTable");
 
@@ -487,7 +583,9 @@ export default class activequeriesRight extends Base {
     });
   }
 
-  // Xử lý sự kiện khi người dùng nhấn vào header cột: xác định loại panel (sắp xếp hoặc ẩn/hiện cột) và mở dialog personalization cho bảng
+  /**
+   * Xử lý sự kiện khi người dùng nhấn vào header cột: xác định loại panel (sắp xếp hoặc ẩn/hiện cột) và mở dialog personalization cho bảng
+   */
   public onColumnHeaderItemPress(event: Event): void {
     const table = this.getControlById<Table>("persoTable");
     const icon = <string>(event.getSource() as any).getIcon();
@@ -498,7 +596,9 @@ export default class activequeriesRight extends Base {
     });
   }
 
-  // Xử lý sự kiện sắp xếp cột: cập nhật trạng thái sorter của bảng và áp dụng lại state thông qua Engine
+  /**
+   * Xử lý sự kiện sắp xếp cột: cập nhật trạng thái sorter của bảng và áp dụng lại state thông qua Engine
+   */
   public onSort(event: Event): void {
     const table = this.getControlById<Table>("persoTable");
     const AffectedProperty = this.getKey(<Column>(event as any).getParameter("column"));
@@ -518,7 +618,9 @@ export default class activequeriesRight extends Base {
     });
   }
 
-  // Xử lý sự kiện khi người dùng di chuyển cột: cập nhật vị trí cột trong state và áp dụng lại thông qua Engine
+  /**
+   * Xử lý sự kiện khi người dùng di chuyển cột: cập nhật vị trí cột trong state và áp dụng lại thông qua Engine
+   */
   public onColumnMove(event: Event): void {
     const table = this.getControlById<Table>("persoTable");
     const AffectedColumn = <Column>(event as any).getParameter("column");
@@ -538,76 +640,93 @@ export default class activequeriesRight extends Base {
     });
   }
 
-  // Lấy key duy nhất của cột dựa trên local ID trong view
+  /**
+   * Lấy key duy nhất của cột dựa trên local ID trong view
+   */
   private getKey(Control: Column): string {
     return this.getView()?.getLocalId(Control.getId()) || "";
   }
 
-  // Cập nhật trạng thái bảng (cột, chiều rộng, hiển thị, sắp xếp) dựa trên state
+  /**
+   * Cập nhật trạng thái bảng (cột, chiều rộng, hiển thị, sắp xếp) dựa trên state
+  */
   public handleStateChange(event: Event): void {
     const table = this.getControlById<Table>("persoTable");
-    const State = (event as any).getParameter("state");
+    const state = (event as any).getParameter("state");
 
-    // table.getColumns().forEach((column: Column) => {
-    //   const Key = this.getKey(column);
-    //   // const ColumnWidth =
-    //   //   State.ColumnWidth && State.ColumnWidth[Key]
-    //   //     ? State.ColumnWidth[Key]
-    //   //     : this.IntialWidth[Key];
-    //   // const ColumnWidth = State.ColumnWidth[Key];
+    if (!table || !state) {
+      return;
+    }
 
-    //   // column.setWidth(ColumnWidth);
-    //   column.setVisible(false);
-    //   column.setSortOrder(CoreLibrary.SortOrder.None);
-    // });
+    this.resetTableColumns(table);
+    this.applyColumnState(table, state);
+    this.applySorterState(table, state);
+  }
 
+  /**
+   * Reset trạng thái cột Table: ẩn cột và xoá sort
+   */
+  private resetTableColumns(table: Table): void {
     table.getColumns().forEach((column: Column) => {
       const key = this.getKey(column);
-
       if (!key) {
-        return; // ⚠️ cột không được khai báo trong MetadataHelper
+        return;
       }
 
       column.setVisible(false);
       column.setSortOrder(CoreLibrary.SortOrder.None);
     });
+  }
 
-    State.Columns.forEach((Prop: any, Index: number) => {
-      const Col = this.getControlById<Column>(Prop.key);
-      Col.setVisible(true);
+  /**
+   * Áp dụng trạng thái cột: hiển thị và sắp xếp lại thứ tự theo state P13n
+   */
+  private applyColumnState(table: Table, state: any): void {
+    state.Columns?.forEach((prop: any, index: number) => {
+      const column = this.getControlById<Column>(prop.key);
+      if (!column) {
+        return;
+      }
 
-      table.removeColumn(Col);
-      table.insertColumn(Col, Index);
+      column.setVisible(true);
+      table.removeColumn(column);
+      table.insertColumn(column, index);
     });
+  }
 
-    const Sorters: Sorter[] = [];
+  /**
+   * Áp dụng trạng thái sort từ P13n: set sort order cột và sort dữ liệu Table
+   */
+  private applySorterState(table: Table, state: any): void {
+    const sorters: Sorter[] = [];
 
-    State.Sorter.forEach((Sorte: any) => {
-      const Column = this.getControlById<Column>(Sorte.key);
+    state.Sorter?.forEach((sort: any) => {
+      const column = this.getControlById<Column>(sort.key);
+      if (!column) {
+        return;
+      }
 
-      // Cập nhật hiển thị sort order trên column
-      Column.setSortOrder(
-        Sorte.descending
+      column.setSortOrder(
+        sort.descending
           ? CoreLibrary.SortOrder.Descending
           : CoreLibrary.SortOrder.Ascending
       );
 
-      // Tạo sorter cho binding
-      const ColumnSorter = new Sorter(
-        this.MetadataHelper.getProperty(Sorte.key).path,
-        Sorte.descending
-      );
-
-      Sorters.push(ColumnSorter);
+      const property = this.MetadataHelper.getProperty(sort.key)?.path;
+      if (property) {
+        sorters.push(new Sorter(property, sort.descending));
+      }
     });
 
-    // Áp dụng sorter cho binding
-    const Binding = <ListBinding>table.getBinding("rows");
-
-    Binding.sort(Sorters);
+    const binding = table.getBinding("rows") as ListBinding;
+    if (binding) {
+      binding.sort(sorters);
+    }
   }
 
-  // Lưu và áp dụng lại độ rộng cột khi người dùng resize cột trong Table
+  /**
+   * Lưu và áp dụng lại độ rộng cột khi người dùng resize cột trong Table
+   */
   public onColumnResize(event: Event): void {
     const Column = <Column>(event as any).getParameter("column");
     const Width = <string>(event as any).getParameter("width");
@@ -619,9 +738,9 @@ export default class activequeriesRight extends Base {
     Engine.getInstance().applyState(Table, { ColumnWidth: ColumnState } as any);
   }
 
-  // #endregion
-
-  // #region Khi chọn trạng thái ở table
+  /**
+   * Xử lý khi thay đổi Status: tạo filter theo lựa chọn và áp dụng lọc cho Table
+   */
   public onStatusChange(event: Event): void {
     const key = (<Item>(event as any).getParameter("selectedItem")).getKey();
     const table = this.getControlById<Table>("persoTable");
@@ -676,8 +795,6 @@ export default class activequeriesRight extends Base {
       binding.filter(Filters);
     }
   }
-  // #endregion
-
   // #endregion
 
   // #region Filter Search
