@@ -158,60 +158,35 @@ export default class activequeriesRight extends Base {
   private loadDataById(
     channel: string,
     eventId: string,
-    payload: { SubstepId?: string }
+    payload: { SubstepId?: string; StepID?: string }
   ): void {
-    if (!payload?.SubstepId) {
+    if (!payload?.SubstepId || !payload?.StepID) {
       return;
     }
 
     const model = this.getModel("dulieuFiltered");
     const odataModel = this.getModel<ODataModel>();
 
-    odataModel.read("/StepListSet", {
-      urlParameters: {
-        "$expand": "ToSubstepList/ToTaskList"
-      },
+    odataModel.read("/TaskListSet", {
+      filters: [
+        new Filter("Step", FilterOperator.EQ, payload?.StepID),
+        new Filter("Substep", FilterOperator.EQ, payload?.SubstepId)
+      ],
       success: (response: ODataResponse<any[]>) => {
-        if (!payload.SubstepId) {
-          return;
-        }
-        const result = this.extractTasksBySubstep(
-          response.results,
-          payload.SubstepId
-        );
+        const count = response.results.length;
 
-        this.updateTitle(result.substepDescr);
         model.setProperty("/dulieu", {
-          ToTaskList: { results: result.tasks }
+          ToTaskList: {
+            results: response.results
+          }
         });
+
+        if (response.results.length) {
+          this.updateTitle(response.results[0].SubstepDescr);
+        }
       },
       error: (err: Error) => console.error(err)
     });
-  }
-
-  /**
-   * Tìm Substep theo ID và trích xuất danh sách Task cùng mô tả Substep
-   */
-  private extractTasksBySubstep(
-    steps: any[],
-    substepId: string
-  ): { tasks: any[]; substepDescr?: string } {
-    for (const step of steps) {
-      const substeps = step.ToSubstepList?.results || [];
-
-      const substep = substeps.find(
-        (s: any) => s.Substep === substepId
-      );
-
-      if (substep) {
-        return {
-          tasks: substep.ToTaskList?.results || [],
-          substepDescr: substep.SubstepDescr
-        };
-      }
-    }
-
-    return { tasks: [] };
   }
 
   /**
@@ -234,8 +209,10 @@ export default class activequeriesRight extends Base {
   ): void {
     this.onResetFilters();
 
-    const substep = payload?.data;
-    if (!substep?.Substep) {
+    const substep = payload?.data.Substep;
+    const step = payload?.data.Step;
+
+    if (!substep) {
       return;
     }
 
@@ -245,6 +222,11 @@ export default class activequeriesRight extends Base {
     const filteredItems = this.filterChildrenByNode(substep.Substep);
 
     this.updateFilterModels(filteredItems);
+
+    this.loadDataById(channel, eventId, {
+      SubstepId: substep,
+      StepID: step
+    });
   }
 
   /**
@@ -285,6 +267,7 @@ export default class activequeriesRight extends Base {
   /**
    * Map mã trạng thái sang text hiển thị tương ứng
    */
+
   private mapStatusText(status: string): string {
     const map: Record<string, string> = {
       "01": "New",
@@ -317,102 +300,6 @@ export default class activequeriesRight extends Base {
         this.buildUniqueItems(items, "ForwardedBy")
       );
   }
-
-
-  // private onItemClicked(channel: string, eventId: string, data: any): void {
-  //   this.onResetFilters();
-
-  //   let tilteText = this.getControlById<Text>("tilteText");
-
-  //   if (tilteText) {
-  //     (tilteText as any).setText(data.data.SubstepDescr);
-  //   }
-
-  //   const NodeID = data.data.Substep;
-
-  //   if (!NodeID) {
-  //     return;
-  //   }
-
-  //   const model = this.getModel("dulieuFiltered");
-
-  //   model.setProperty("/dulieu", data.data);
-
-  //   // // Lọc dữ liệu con theo idCha
-  //   const Filtered = (this.getModel("dulieu")?.getData().dulieu || []).filter(
-  //     (item: any) => item.idCha === NodeID
-  //   );
-
-  //   // Đẩy dữ liệu filtered vào model tạm để bind vào UI
-  //   // const FilteredModel = new JSONModel({ dulieu: Filtered });
-
-  //   // this.setModel(FilteredModel, "dulieuFiltered");
-
-  //   // Lấy dữ liệu form ra
-  //   const fromItems = Array.from(
-  //     new Map(
-  //       Filtered
-  //         .filter((item: any) => item.From) // tránh null/undefined
-  //         .map((item: any) => [item.From, item])
-  //     ).values()
-  //   ).map((item: any, index: number) => ({
-  //     key: index + 1,
-  //     text: item.From
-  //   }))
-
-  //   const PriorityItems = Array.from(
-  //     new Map(
-  //       Filtered
-  //         .filter((item: any) => item.Priority) // tránh null/undefined
-  //         .map((item: any) => [item.Priority, item])
-  //     ).values()
-  //   ).map((item: any, index: number) => ({
-  //     key: index + 1,
-  //     text: item.Priority
-  //   }))
-
-  //   const StatusItems = Array.from(
-  //     new Map(
-  //       Filtered
-  //         .filter((item: any) => item.Status) // tránh null/undefined
-  //         .map((item: any) => [item.Status, item])
-  //     ).values()
-  //   ).map((item: any, index: number) => ({
-  //     key: item.Status,
-  //     text:
-  //       item.Status === "01"
-  //         ? "New"
-  //         : item.Status === "02"
-  //           ? "In Progress"
-  //           : item.Status === "03"
-  //             ? "Rejected"
-  //             : item.Status === "04"
-  //               ? "Approved"
-  //               : item.Status
-  //   }))
-
-  //   const ForwardedByItems = Array.from(
-  //     new Map(
-  //       Filtered
-  //         .filter((item: any) => item.ForwardedBy) // tránh null/undefined
-  //         .map((item: any) => [item.ForwardedBy, item])
-  //     ).values()
-  //   ).map((item: any, index: number) => ({
-  //     key: index + 1,
-  //     text: item.ForwardedBy
-  //   }))
-
-  //   const FormModel = <JSONModel>this.getModel("formModel");
-  //   const PriorityModel = <JSONModel>this.getModel("PriorityModel");
-  //   const StatusModel = <JSONModel>this.getModel("StatusModel");
-  //   const ForwardedByModel = <JSONModel>this.getModel("ForwardedByModel");
-
-  //   // Đổ danh sách item
-  //   FormModel.setProperty("/fromItems", fromItems);
-  //   PriorityModel.setProperty("/PriorityItems", PriorityItems);
-  //   StatusModel.setProperty("/StatusItems", StatusItems);
-  //   ForwardedByModel.setProperty("/ForwardedByItems", ForwardedByItems);
-  // }
 
   // #endregion
 
@@ -487,9 +374,18 @@ export default class activequeriesRight extends Base {
   */
   public formatStatusText(statusKey: string): string {
     const map: Record<string, string> = {
-      "01": "New",
-      "02": "Approved",
-      "03": "Rejected",
+      "WAITING": "Waiting",
+      "READY": "Ready",
+      "SELECTED": "Accepted",
+      "STARTED": "In Process",
+      "ERROR": "Error",
+      "COMMITTED": "Executed",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Logically Deleted",
+      "CHECKED": "In Preparation",
+      "EXCPCAUGHT": "Exception Caught",
+      "EXCPHANDLR": "Exception Active",
+      "R": "Ready",
     };
 
     return map[statusKey] ?? statusKey;
@@ -498,13 +394,31 @@ export default class activequeriesRight extends Base {
   /**
    * Map mã trạng thái sang ValueState tương ứng để hiển thị UI
    */
-  public formatStatusState(statusKey: string): ValueState {
-    const map: Record<string, ValueState> = {
-      "01": ValueState.Information,
-      "02": ValueState.Success,
-      "03": ValueState.Error,
+  // public formatStatusState(statusKey: string): ValueState {
+  //   const map: Record<string, ValueState> = {
+  //     "01": ValueState.Information,
+  //     "02": ValueState.Success,
+  //     "03": ValueState.Error,
+  //   };
+  //   return map[statusKey] ?? ValueState.None;
+  // }
+
+  /**
+   * Format map text vào với Priority
+   */
+  public mapTextPriority(status: string): string {
+    const map: Record<string, string> = {
+      "1": "1 Highest - Express",
+      "2": "2 Very high",
+      "3": "3 Higher",
+      "4": "4 High",
+      "5": "5 Medium",
+      "6": "6 Low",
+      "7": "7 Lower",
+      "8": "8 Very low",
+      "9": "9 Lowest"
     };
-    return map[statusKey] ?? ValueState.None;
+    return map[status] || status;
   }
   // #endregion
 
@@ -798,12 +712,16 @@ export default class activequeriesRight extends Base {
   // #endregion
 
   // #region Filter Search
-  // Lifecycle hook
+  /**
+   * Lifecycle hook
+   */
   public override onAfterRendering(): void | undefined {
     this.filterBar.fireSearch();
   }
 
-  // Lấy các giá trị của các trường để tạo một biến thể bộ lọc mới.
+  /**
+   * Lấy các giá trị của các trường để tạo một biến thể bộ lọc mới.
+   */
   private fetchData = () => {
     return this.filterBar.getAllFilterItems(false).reduce<FilterPayload[]>((acc, item: FilterGroupItem) => {
       const control = item.getControl();
@@ -857,7 +775,9 @@ export default class activequeriesRight extends Base {
     }, []);
   };
 
-  // Áp dụng các giá trị của các trường từ biến thể bộ lọc.
+  /**
+   * Áp dụng các giá trị của các trường từ biến thể bộ lọc.
+   */
   private applyData = (data: unknown) => {
     (<FilterPayload[]>data).forEach((item) => {
       const { groupName, fieldName, fieldData } = item;
@@ -901,7 +821,9 @@ export default class activequeriesRight extends Base {
     });
   };
 
-  // Lấy các bộ lọc có giá trị để hiển thị trên nhãn
+  /**
+   * Lấy các bộ lọc có giá trị để hiển thị trên nhãn
+   */
   private getFiltersWithValues = () => {
     return this.filterBar.getFilterGroupItems().reduce<FilterGroupItem[]>((acc, item) => {
       const control = item.getControl();
@@ -965,27 +887,37 @@ export default class activequeriesRight extends Base {
     }, []);
   };
 
-  // Chuyển tiếp sự kiện thay đổi bộ lọc từ FilterBar
+  /**
+   * Chuyển tiếp sự kiện thay đổi bộ lọc từ FilterBar
+   */
   public onSelectionChange(event: FilterBar$FilterChangeEvent) {
     this.filterBar.fireEvent("filterChange", event);
   }
 
-  // Xử lý khi bộ lọc thay đổi và cập nhật nhãn cùng bảng dữ liệu
+  /**
+   * Xử lý khi bộ lọc thay đổi và cập nhật nhãn cùng bảng dữ liệu
+   */
   public onFilterChange() {
     this.updateLabelsAndTable();
   }
 
-  // Cập nhật lại nhãn và bảng dữ liệu sau khi áp dụng xong biến thể lọc
+  /**
+   * Cập nhật lại nhãn và bảng dữ liệu sau khi áp dụng xong biến thể lọc
+   */
   public onAfterVariantLoad() {
     this.updateLabelsAndTable();
   }
 
-  // Cập nhật nội dung nhãn hiển thị bộ lọc (expanded/snapped) và chuẩn bị làm mới bảng dữ liệu
+  /**
+   * Cập nhật nội dung nhãn hiển thị bộ lọc (expanded/snapped) và chuẩn bị làm mới bảng dữ liệu
+   */
   private updateLabelsAndTable() {
     console.log("Cập nhật text nhé");
   }
 
-  // Thu thập và trả về các giá trị bộ lọc hiện tại từ FilterBar theo từng loại control
+  /**
+   * Thu thập và trả về các giá trị bộ lọc hiện tại từ FilterBar theo từng loại control
+   */
   public getFilters() {
     const filters = this.filterBar.getFilterGroupItems().reduce<Dict>((acc, item) => {
       const control = item.getControl();
@@ -1034,7 +966,9 @@ export default class activequeriesRight extends Base {
     return filters;
   }
 
-  // Search
+  /**
+   * Hàm search
+   */
   // public onSearch() {
   //   const oDataModel = this.getModel<ODataModel>("dulieuFiltered");
   //   const tableModel = this.getModel<JSONModel>("table");
@@ -1057,6 +991,9 @@ export default class activequeriesRight extends Base {
   //   });
   // }
 
+  /**
+   * Hàm search thủ công
+   */
   public onSearch() {
     const tableModel = this.getModel<JSONModel>("table");
     const data = this.getModel<JSONModel>("dulieuFiltered1").getProperty("/dulieu");
@@ -1089,11 +1026,16 @@ export default class activequeriesRight extends Base {
     this.table.setBusy(false);
   }
 
-  // Hàm reset dữ liệu filter
+  /**
+   * Hàm reset dữ liệu filter
+   */
   public clearFilterBar(): void {
     this.onResetFilters();
   }
 
+  /**
+   * Reset toàn bộ filter về mặc định và khôi phục dữ liệu ban đầu cho Table
+   */
   private onResetFilters(): void {
     const FilterBar = this.getControlById<FilterBar>("filterbar");
 

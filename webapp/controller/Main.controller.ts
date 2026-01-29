@@ -166,6 +166,7 @@ export default class Main extends Base {
         sub.count = sub.ToTaskList?.results?.length || 0;
       });
 
+
       return {
         ...step,
         ToSubstepList: substeps
@@ -193,7 +194,7 @@ export default class Main extends Base {
     }
 
     this.navigateToDetail(leafNode.Substep);
-    this.publishSelectedSubstep(leafNode.Substep);
+    this.publishSelectedSubstep(leafNode.Substep, leafNode.Step);
   }
 
   /**
@@ -224,12 +225,13 @@ export default class Main extends Base {
   /**
    * Phát sự kiện qua EventBus để truyền SubstepId sang component khác
    */
-  private publishSelectedSubstep(substepId: string): void {
+  private publishSelectedSubstep(substepId: string, StepID: string): void {
     const eventBus = this.getOwnerComponent()?.getEventBus() as EventBus;
+    
     eventBus.publish(
       "LayDuLieuVoiIDTuongUng",
       "itemDataID",
-      { SubstepId: substepId }
+      { SubstepId: substepId, StepID: StepID }
     );
   }
   // #endregion

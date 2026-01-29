@@ -195,7 +195,7 @@
                         <Label text="Subject" />
                         <ui:template>
                             <!-- <Text text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/> -->
-                            <Link text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/>
+                            <Link text="{dulieuFiltered>WiText}" wrapping="false" tooltip="{dulieuFiltered>WiText}"/>
                         </ui:template>
                     </ui:Column>
                     <ui:Column id="sentOn_col" headerMenu="menu" resizable="true" autoResizable="true" width="150px" sortProperty="Sent on">
@@ -203,7 +203,11 @@
                         <ui:template>
                             <Text
                                 text="{
-                                    path: 'dulieuFiltered>WiCd',
+                                    parts: [
+                                        { path: 'dulieuFiltered>WiCd' },
+                                        { value: 'dd/MM/yyyy' },
+                                        { value: 'dd/MM/yyyy' }
+                                    ],
                                     formatter: '.formatter.formatDate'
                                 }"
                             />
@@ -212,7 +216,11 @@
                      <ui:Column id="Priority_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Priority">
                         <Label text="Priority" />
                         <ui:template>
-                            <Text text="{dulieuFiltered>Priority}" tooltip="{dulieuFiltered>Priority}"/>
+                            <ObjectStatus
+                                text="{
+                                    path: 'dulieuFiltered>WiPrio', formatter: '.mapTextPriority'
+                                }"
+                            />
                         </ui:template>
                     </ui:Column>
                     <ui:Column id="dueDate_col" headerMenu="menu" resizable="true" autoResizable="true" width="150px" sortProperty="Due date">
@@ -220,10 +228,14 @@
                         <ui:template>
                             <Text
                                 text="{
-                                    path: 'dulieuFiltered>WiAed',
+                                    parts: [
+                                        { path: 'dulieuFiltered>WiAed' },
+                                        { value: 'dd/MM/yyyy' },
+                                        { value: 'dd/MM/yyyy' }
+                                    ],
                                     formatter: '.formatter.formatDate'
                                 }"
-                            />
+                                />
                         </ui:template>
                     </ui:Column>
                     <ui:Column id="status_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Status">
@@ -232,9 +244,6 @@
                             <ObjectStatus
                                 text="{
                                     path: 'dulieuFiltered>WiStat', formatter: '.formatStatusText'
-                                }"
-                                state="{
-                                    path: 'dulieuFiltered>WiStat', formatter: '.formatStatusState'
                                 }"
                                 inverted="true"
                             />
