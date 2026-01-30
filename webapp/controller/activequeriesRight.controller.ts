@@ -88,8 +88,48 @@ export default class activequeriesRight extends Base {
     this.setModel(new JSONModel({ dulieu: [] }), "dulieuFiltered1");
 
     this.setModel(new JSONModel({ fromItems: [] }), "formModel");
-    this.setModel(new JSONModel({ PriorityItems: [] }), "PriorityModel");
-    this.setModel(new JSONModel({ StatusItems: [] }), "StatusModel");
+    this.setModel(
+      new JSONModel({
+        PriorityItems: Object.entries({
+          "1": "1 Highest - Express",
+          "2": "2 Very high",
+          "3": "3 Higher",
+          "4": "4 High",
+          "5": "5 Medium",
+          "6": "6 Low",
+          "7": "7 Lower",
+          "8": "8 Very low",
+          "9": "9 Lowest"
+        }).map(([key, text]) => ({
+          key,
+          text
+        }))
+      }),
+      "PriorityModel"
+    );
+    this.setModel(
+      new JSONModel({
+        StatusItems: Object.entries({
+          "WAITING": "Waiting",
+          "READY": "Ready",
+          "SELECTED": "Accepted",
+          "STARTED": "In Process",
+          "ERROR": "Error",
+          "COMMITTED": "Executed",
+          "COMPLETED": "Completed",
+          "CANCELLED": "Logically Deleted",
+          "CHECKED": "In Preparation",
+          "EXCPCAUGHT": "Exception Caught",
+          "EXCPHANDLR": "Exception Active",
+          "R": "Ready",
+          "S": "Accepted"
+        }).map(([key, text]) => ({
+          key,
+          text
+        }))
+      }),
+      "StatusModel"
+    );
     this.setModel(new JSONModel({ ForwardedByItems: [] }), "ForwardedByModel");
 
     this.setModel(new JSONModel(StatusSelectData), "showModel");
@@ -158,7 +198,7 @@ export default class activequeriesRight extends Base {
   private loadDataById(
     channel: string,
     eventId: string,
-    payload: { SubstepId?: string; StepID?: string }
+    payload: { SubstepId?: string; StepID?: string, SubstepDescr?: string }
   ): void {
     if (!payload?.SubstepId || !payload?.StepID) {
       return;
@@ -181,12 +221,40 @@ export default class activequeriesRight extends Base {
           }
         });
 
+        this.updateForwardedByModel(response.results);
+
         if (response.results.length) {
-          this.updateTitle(response.results[0].SubstepDescr);
+          this.updateTitle(payload?.SubstepDescr);
         }
       },
       error: (err: Error) => console.error(err)
     });
+  }
+
+  /**
+   * Cập nhật ForwardedByModel
+   */
+  private updateForwardedByModel(tasks: any[]): void {
+    const forwardedByItems = Array.from(
+      new Map(
+        tasks
+          .filter(task => task.WiForwBy)
+          .map(task => [
+            task.WiForwBy,
+            {
+              key: task.WiForwBy,
+              text: task.WiForwBy
+            }
+          ])
+      ).values()
+    );
+
+    this.setModel(
+      new JSONModel({
+        ForwardedByItems: forwardedByItems
+      }),
+      "ForwardedByModel"
+    );
   }
 
   /**
@@ -216,12 +284,12 @@ export default class activequeriesRight extends Base {
       return;
     }
 
-    this.updateTitle(substep.SubstepDescr);
+    this.updateTitle(payload.data.SubstepDescr);
     this.updateDetailModel(substep);
 
     const filteredItems = this.filterChildrenByNode(substep.Substep);
 
-    this.updateFilterModels(filteredItems);
+    // this.updateFilterModels(filteredItems);
 
     this.loadDataById(channel, eventId, {
       SubstepId: substep,
@@ -242,63 +310,6 @@ export default class activequeriesRight extends Base {
   private filterChildrenByNode(nodeId: string): any[] {
     const source = this.getModel("dulieu")?.getData().dulieu || [];
     return source.filter((item: any) => item.idCha === nodeId);
-  }
-
-  /**
-   * Tạo danh sách item duy nhất theo key, kèm text hiển thị (có thể custom)
-   */
-  private buildUniqueItems<T>(
-    data: T[],
-    key: keyof T,
-    textMapper?: (value: any) => string
-  ): { key: any; text: string }[] {
-    return Array.from(
-      new Map(
-        data
-          .filter(item => item[key])
-          .map(item => [item[key], item])
-      ).values()
-    ).map(item => ({
-      key: item[key],
-      text: textMapper ? textMapper(item[key]) : String(item[key])
-    }));
-  }
-
-  /**
-   * Map mã trạng thái sang text hiển thị tương ứng
-   */
-
-  private mapStatusText(status: string): string {
-    const map: Record<string, string> = {
-      "01": "New",
-      "02": "In Progress",
-      "03": "Rejected",
-      "04": "Approved"
-    };
-    return map[status] || status;
-  }
-
-  /**
-   * Cập nhật các model filter (From, Priority, Status, ForwardedBy) từ danh sách item
-   */
-  private updateFilterModels(items: any[]): void {
-    this.getModel<JSONModel>("formModel")
-      .setProperty("/fromItems", this.buildUniqueItems(items, "From"));
-
-    this.getModel<JSONModel>("PriorityModel")
-      .setProperty("/PriorityItems", this.buildUniqueItems(items, "Priority"));
-
-    this.getModel<JSONModel>("StatusModel")
-      .setProperty(
-        "/StatusItems",
-        this.buildUniqueItems(items, "Status", this.mapStatusText)
-      );
-
-    this.getModel<JSONModel>("ForwardedByModel")
-      .setProperty(
-        "/ForwardedByItems",
-        this.buildUniqueItems(items, "ForwardedBy")
-      );
   }
 
   // #endregion
@@ -386,6 +397,7 @@ export default class activequeriesRight extends Base {
       "EXCPCAUGHT": "Exception Caught",
       "EXCPHANDLR": "Exception Active",
       "R": "Ready",
+      "S": "Accepted"
     };
 
     return map[statusKey] ?? statusKey;
@@ -394,14 +406,30 @@ export default class activequeriesRight extends Base {
   /**
    * Map mã trạng thái sang ValueState tương ứng để hiển thị UI
    */
-  // public formatStatusState(statusKey: string): ValueState {
-  //   const map: Record<string, ValueState> = {
-  //     "01": ValueState.Information,
-  //     "02": ValueState.Success,
-  //     "03": ValueState.Error,
-  //   };
-  //   return map[statusKey] ?? ValueState.None;
-  // }
+  public formatStatusState(statusKey: string): ValueState {
+    const map: Record<string, ValueState> = {
+      "WAITING": ValueState.Information,
+      "READY": ValueState.Success,
+      "SELECTED": ValueState.Success,
+      "STARTED": ValueState.Warning,
+      "CHECKED": ValueState.Warning,
+
+      "COMPLETED": ValueState.Success,
+      "COMMITTED": ValueState.Success,
+
+      "ERROR": ValueState.Error,
+      "EXCPCAUGHT": ValueState.Error,
+      "EXCPHANDLR": ValueState.Error,
+
+      "CANCELLED": ValueState.None,
+
+      // alias ngắn
+      "R": ValueState.Success,
+      "S": ValueState.Success
+    };
+
+    return map[statusKey] ?? ValueState.None;
+  }
 
   /**
    * Format map text vào với Priority
@@ -713,7 +741,7 @@ export default class activequeriesRight extends Base {
 
   // #region Filter Search
   /**
-   * Lifecycle hook
+   * Tự động thực hiện tìm kiếm sau khi giao diện render xong
    */
   public override onAfterRendering(): void | undefined {
     this.filterBar.fireSearch();
@@ -969,62 +997,62 @@ export default class activequeriesRight extends Base {
   /**
    * Hàm search
    */
-  // public onSearch() {
-  //   const oDataModel = this.getModel<ODataModel>("dulieuFiltered");
-  //   const tableModel = this.getModel<JSONModel>("table");
+  public onSearch() {
+    const oDataModel = this.getModel<ODataModel>();
+    const tableModel = this.getModel<JSONModel>("dulieuFiltered");
 
-  //   this.table.setBusy(true);
-  //   oDataModel.read("/dulieu", {
-  //     filters: [],
-  //     urlParameters: {},
-  //     success: (response: ODataResponse<XayDungToTrinh[]>) => {
-  //       this.table.setBusy(false);
+    this.table.setBusy(true);
+    oDataModel.read("/TaskListSet", {
+      filters: [],
+      urlParameters: {},
+      success: (response: ODataResponse<any[]>) => {
+        this.table.setBusy(false);
 
-  //       console.log("OData read success:", response.results);
+        console.log("OData read success:", response.results);
 
-  //       tableModel.setProperty("/rows", response.results);
-  //     },
-  //     error: (error: ODataError) => {
-  //       this.table.setBusy(false);
-  //       console.error("OData read error:", error);
-  //     },
-  //   });
-  // }
+        tableModel.setProperty("/dulieu", response.results);
+      },
+      error: (error: ODataError) => {
+        this.table.setBusy(false);
+        console.error("OData read error:", error);
+      },
+    });
+  }
 
   /**
    * Hàm search thủ công
    */
-  public onSearch() {
-    const tableModel = this.getModel<JSONModel>("table");
-    const data = this.getModel<JSONModel>("dulieuFiltered1").getProperty("/dulieu");
+  // public onSearch() {
+  //   const tableModel = this.getModel<JSONModel>("table");
+  //   const data = this.getModel<JSONModel>("dulieuFiltered1").getProperty("/dulieu");
 
-    this.table.setBusy(true);
+  //   this.table.setBusy(true);
 
-    const subject = this.getControlById<Input>("Subject")?.getValue()?.toLowerCase();
-    const from = this.getControlById<MultiComboBox>("From")?.getSelectedItems();
-    const sentOn = this.getControlById<DatePicker>("SentOn")?.getValue();
-    const priority = this.getControlById<MultiComboBox>("Priority")?.getSelectedItems();
-    const dueDate = this.getControlById<DatePicker>("Duedate")?.getValue();
-    const status = this.getControlById<MultiComboBox>("Status")?.getSelectedKeys();
-    const forwardedBy = this.getControlById<MultiComboBox>("ForwardedBy")?.getSelectedItems();
-    const normalizeDate = (Date: string) => Date ? Date.replace(/-/g, "") : "";
+  //   const subject = this.getControlById<Input>("Subject")?.getValue()?.toLowerCase();
+  //   const from = this.getControlById<MultiComboBox>("From")?.getSelectedItems();
+  //   const sentOn = this.getControlById<DatePicker>("SentOn")?.getValue();
+  //   const priority = this.getControlById<MultiComboBox>("Priority")?.getSelectedItems();
+  //   const dueDate = this.getControlById<DatePicker>("Duedate")?.getValue();
+  //   const status = this.getControlById<MultiComboBox>("Status")?.getSelectedKeys();
+  //   const forwardedBy = this.getControlById<MultiComboBox>("ForwardedBy")?.getSelectedItems();
+  //   const normalizeDate = (Date: string) => Date ? Date.replace(/-/g, "") : "";
 
-    const filteredData = data.filter((item: any) => {
-      return (
-        (!subject || item.Subject?.toLowerCase().includes(subject)) &&
-        (!from?.length || from.map(item => item.getText()).includes(item.From)) &&
-        (!sentOn || normalizeDate(item.SentOn) === sentOn) &&
-        (!priority?.length || priority.map(item => item.getText()).includes(item.Priority)) &&
-        (!dueDate || normalizeDate(item.Duedate) === dueDate) &&
-        (!status?.length || status.includes(item.Status)) &&
-        (!forwardedBy?.length || forwardedBy.map(item => item.getText()).includes(item.ForwardedBy))
-      );
-    });
+  //   const filteredData = data.filter((item: any) => {
+  //     return (
+  //       (!subject || item.Subject?.toLowerCase().includes(subject)) &&
+  //       (!from?.length || from.map(item => item.getText()).includes(item.From)) &&
+  //       (!sentOn || normalizeDate(item.SentOn) === sentOn) &&
+  //       (!priority?.length || priority.map(item => item.getText()).includes(item.Priority)) &&
+  //       (!dueDate || normalizeDate(item.Duedate) === dueDate) &&
+  //       (!status?.length || status.includes(item.Status)) &&
+  //       (!forwardedBy?.length || forwardedBy.map(item => item.getText()).includes(item.ForwardedBy))
+  //     );
+  //   });
 
-    this.getModel<JSONModel>("dulieuFiltered")!.setProperty("/dulieu", filteredData);
+  //   this.getModel<JSONModel>("dulieuFiltered")!.setProperty("/dulieu", filteredData);
 
-    this.table.setBusy(false);
-  }
+  //   this.table.setBusy(false);
+  // }
 
   /**
    * Hàm reset dữ liệu filter

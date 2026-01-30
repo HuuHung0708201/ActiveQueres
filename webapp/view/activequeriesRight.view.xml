@@ -194,7 +194,6 @@
                     <ui:Column id="TaskDescr_col" headerMenu="menu" resizable="true" autoResizable="true" width="250px" sortProperty="TaskDescr">
                         <Label text="Subject" />
                         <ui:template>
-                            <!-- <Text text="{dulieuFiltered>TaskDescr} {dulieuFiltered>Task}" wrapping="false" tooltip="{dulieuFiltered>TaskDescr}"/> -->
                             <Link text="{dulieuFiltered>WiText}" wrapping="false" tooltip="{dulieuFiltered>WiText}"/>
                         </ui:template>
                     </ui:Column>
@@ -213,7 +212,7 @@
                             />
                         </ui:template>
                     </ui:Column>
-                     <ui:Column id="Priority_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Priority">
+                    <ui:Column id="Priority_col" headerMenu="menu" resizable="true" autoResizable="true" width="120px" sortProperty="Priority">
                         <Label text="Priority" />
                         <ui:template>
                             <ObjectStatus
@@ -244,6 +243,10 @@
                             <ObjectStatus
                                 text="{
                                     path: 'dulieuFiltered>WiStat', formatter: '.formatStatusText'
+                                }"
+                                state="{
+                                    path: 'dulieuFiltered>WiStat',
+                                    formatter: '.formatStatusState'
                                 }"
                                 inverted="true"
                             />

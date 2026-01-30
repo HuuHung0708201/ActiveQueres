@@ -194,7 +194,7 @@ export default class Main extends Base {
     }
 
     this.navigateToDetail(leafNode.Substep);
-    this.publishSelectedSubstep(leafNode.Substep, leafNode.Step);
+    this.publishSelectedSubstep(leafNode.Substep, leafNode.Step, leafNode.SubstepDescr);
   }
 
   /**
@@ -225,13 +225,13 @@ export default class Main extends Base {
   /**
    * Phát sự kiện qua EventBus để truyền SubstepId sang component khác
    */
-  private publishSelectedSubstep(substepId: string, StepID: string): void {
+  private publishSelectedSubstep(substepId: string, StepID: string, SubstepDescr: string): void {
     const eventBus = this.getOwnerComponent()?.getEventBus() as EventBus;
     
     eventBus.publish(
       "LayDuLieuVoiIDTuongUng",
       "itemDataID",
-      { SubstepId: substepId, StepID: StepID }
+      { SubstepId: substepId, StepID: StepID, SubstepDescr: SubstepDescr }
     );
   }
   // #endregion
